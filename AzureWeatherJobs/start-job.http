@@ -1,0 +1,7 @@
+# Request to Start Job
+POST http://localhost:7071/api/start-job
+Content-Type: application/json
+
+{
+    "station": "Rotterdam"
+}

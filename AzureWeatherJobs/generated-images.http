@@ -1,0 +1,2 @@
+# Retrieve Generated Images
+GET http://localhost:7071/api/generated-images/{jobId}

@@ -9,7 +9,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessWeatherImageJob", "P
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageGenerationJob", "ImageGenerationJob\ImageGenerationJob.csproj", "{2A059388-28C8-4580-B200-CF28B0A6BE3F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FetchGeneratedImages", "FetchGeneratedImages\FetchGeneratedImages.csproj", "{B6CB65A3-E48B-4EE6-A174-80B3E51B1A60}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FetchGeneratedImages", "FetchGeneratedImages\FetchGeneratedImages.csproj", "{B6CB65A3-E48B-4EE6-A174-80B3E51B1A60}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "http", "http", "{45BB805F-3C69-4A02-91D6-AE732371762E}"
+	ProjectSection(SolutionItems) = preProject
+		generated-images.http = generated-images.http
+		start-job.http = start-job.http
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deployment", "deployment", "{CCA54B3B-3567-45C5-9F28-AAD69D6FF434}"
+	ProjectSection(SolutionItems) = preProject
+		deploy.ps1 = deploy.ps1
+		main.bicep = main.bicep
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

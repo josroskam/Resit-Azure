@@ -14,7 +14,7 @@ namespace StartFunction
     {
         [FunctionName("StartWeatherImageJob")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "start-job")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "start-job")] HttpRequest req,
             [Queue("weather-image-jobs", Connection = "AzureWebJobsStorage")] IAsyncCollector<string> jobQueue,
             ILogger log)
         {

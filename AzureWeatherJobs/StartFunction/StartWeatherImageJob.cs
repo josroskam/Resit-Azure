@@ -23,7 +23,7 @@ namespace StartFunction
             // Generate a unique job ID
             string jobId = Guid.NewGuid().ToString();
 
-            // Enqueue the job ID along with any necessary data (in this example, just the ID)
+            // Enqueue the job ID along with any necessary data 
             await jobQueue.AddAsync(jobId);
 
             // Respond with the job ID so the client can track it

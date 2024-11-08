@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ProcessWeatherImageJob": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7019",
+      "launchBrowser": false
+    }
+  }
+}

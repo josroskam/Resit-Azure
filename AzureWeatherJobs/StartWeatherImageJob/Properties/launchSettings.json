@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "StartFunction": {
+    "StartWeatherImageJob": {
       "commandName": "Project",
       "commandLineArgs": "--port 7224",
       "launchBrowser": false

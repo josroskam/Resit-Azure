@@ -6,48 +6,22 @@ param (
 )
 
 # set variables
-$solutionDirectory = "../AzureWeatherJobs"
+$solutionDirectory = Resolve-Path "../AzureWeatherJobs"
 $functionAppProjects = @(
-    "StartFunction",
-    "FetchGeneratedResults",
-    "ImageGenerationJobs",
-    "ProcessWeatherImageJobs"
+    "StartWeatherImageJob",
+    "FetchGeneratedImages",
+    "ImageGenerationJob",
+    "ProcessWeatherImageJob"
 )
 $outputDirectory = "./publish"
 $bicepFile = "main.bicep"
 
-# delete the output directory if it exists
-if (Test-Path $outputDirectory) {
-    Remove-Item -Recurse -Force $outputDirectory
-}
-
-# create the resource group if it doesn't exist
-Write-Host "Creating resource group: $resourceGroup"
-az group create --name $resourceGroup --location $location
-
-# check if resource group creation was successful
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Failed to create resource group. Exiting."
-    exit $LASTEXITCODE
-}
-
-# deploy the Bicep file to set up infrastructure
-Write-Host "Deploying infrastructure with Bicep file..."
-az deployment group create --resource-group $resourceGroup --template-file $bicepFile --parameters location=$location prefix=$prefix
-
-# check if Bicep deployment was successful
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Bicep deployment failed. Exiting."
-    exit $LASTEXITCODE
-}
-
-# publish the function apps
 foreach ($project in $functionAppProjects) {
     Write-Host "Publishing function app: $project"
     
     # construct the project path and .csproj file path
-    $projectPath = Join-Path $solutionDirectory "AzureWeatherJobs.$project"
-    $csprojFile = "AzureWeatherJobs.$project.csproj"
+    $projectPath = Join-Path $solutionDirectory $project
+    $csprojFile = "$project.csproj"
 
     # check the full path
     $fullCsprojPath = Join-Path $projectPath $csprojFile

@@ -1,6 +1,5 @@
 ﻿using Azure.Data.Tables;
 using Azure.Storage.Queues;
-using Grpc.Core.Logging;
 using Microsoft.Extensions.Logging;
 using StartWeatherImageJob.Entities;
 using System;
@@ -32,6 +31,13 @@ namespace StartWeatherImageJob.Services
             _logger.LogInformation("Creating new job. Sending message to queue and adding entity to table.");
             string jobId = Guid.NewGuid().ToString();
 
+            var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("Azure Storage connection string is not configured properly.");
+            }
+
+
             // create queue if not exists
             await _queueClient.CreateIfNotExistsAsync();
 
@@ -46,9 +52,7 @@ namespace StartWeatherImageJob.Services
             _logger.LogInformation("Adding entity to table: " + jobStatus.RowKey);
 
             await _tableClient.AddEntityAsync(jobStatus);
-            return jobId;
-
-
+            return Guid.NewGuid().ToString();
         }
 
     }

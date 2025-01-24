@@ -1,7 +1,6 @@
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
-using System.IO;
-using System.Threading.Tasks;
+using WeatherImageGenerator.ImageGenerationJob.Entities;
 
 namespace ImageGenerationJob.Services
 {
@@ -16,14 +15,14 @@ namespace ImageGenerationJob.Services
             _logger = logger;
         }
 
-        public async Task UploadImageAsync(int jobId, int stationId, MemoryStream imageStream)
+        public async Task UploadImageAsync(WeatherStation weatherStation, MemoryStream imageStream)
         {
-            _logger.LogInformation($"Uploading image for JobId: {jobId}, StationId: {stationId}");
+            _logger.LogInformation($"Uploading image for JobId: {weatherStation.JobId}, StationId: {weatherStation.StationId}");
             var containerClient = _blobServiceClient.GetBlobContainerClient("weatherimagescontainer");
             await containerClient.CreateIfNotExistsAsync();
-            var blobClient = containerClient.GetBlobClient($"{jobId}/{stationId}.jpg");
+            var blobClient = containerClient.GetBlobClient($"{weatherStation.JobId}/{weatherStation.StationId}.jpg");
             await blobClient.UploadAsync(imageStream, overwrite: true);
-            _logger.LogInformation($"Image uploaded for JobId: {jobId}, StationId: {stationId}");
+            _logger.LogInformation($"Image uploaded for JobId: {weatherStation.JobId}, StationId: {weatherStation.StationId}");
         }
     }
 }

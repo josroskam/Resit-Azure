@@ -9,7 +9,6 @@ using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage.Blob;
-using WeatherImageGenerator.I;
 using WeatherImageGenerator.ImageGenerationJob.Entities;
 using ImageGenerationJob.Services;
 using Azure.Storage.Blobs;
@@ -45,6 +44,18 @@ namespace ImageGenerationJob
         [QueueTrigger("%JOB_START_QUEUE%", Connection = "AZURE_STORAGE_CONNECTION_STRING")] WeatherStation weatherStation)
         {
             _logger.LogInformation($"Processing image generation for JobId: {weatherStation.JobId}, StationId: {weatherStation.StationId}");
+            var blobStream = await _imageGenerationService.GenerateImageAsync(weatherStation);
+
+            if (blobStream != null)
+            {
+                await _blobService.UploadImageAsync(weatherStation, blobStream);
+                await _tableService.UpdateJobStatusAsync(weatherStation);
+            }
+            else
+            {
+                _logger.LogError($"Failed to generate image for JobId: {weatherStation.JobId}, StationId: {weatherStation.StationId}");
+            }
+
         }
     }
 }

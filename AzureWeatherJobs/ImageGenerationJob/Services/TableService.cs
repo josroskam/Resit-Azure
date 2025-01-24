@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Azure.Data.Tables;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
+using WeatherImageGenerator.ImageGenerationJob.Entities;
 
 
 namespace ImageGenerationJob.Services
@@ -22,22 +23,22 @@ namespace ImageGenerationJob.Services
             _tableClient = new TableClient(connectionString, tableName);
         }
 
-        public async Task UpdateStatusAsync(string jobId)
+        public async Task UpdateJobStatusAsync(WeatherStation weatherStation)
         {
-            _logger.LogInformation("Updating status for JobId: {JobId}", jobId);
+            _logger.LogInformation("Updating status for JobId: {JobId}", weatherStation.JobId);
 
             try
             {
-                var jobStatus = await _tableClient.GetEntityAsync<JobStatus>("WeatherJob", jobId);
+                var jobStatusResponse = await _tableClient.GetEntityAsync<JobStatus>("WeatherJob", weatherStation.JobId);
+                var jobStatus = jobStatusResponse.Value;
 
                 jobStatus.ImagesCompleted++;
 
                 if (jobStatus.ImagesCompleted == jobStatus.TotalImages)
                 {
-                    jobStatus.Status = "Completed"; 
+                    jobStatus.Status = "Completed";
                 }
 
-                // update entity
                 await _tableClient.UpdateEntityAsync(jobStatus, jobStatus.ETag);
 
                 _logger.LogInformation("Successfully updated job progress in Table Storage.");
@@ -45,7 +46,7 @@ namespace ImageGenerationJob.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, $"Error updating status for JobId: {jobStatus.RowKey}");
+                _logger.LogError(e, $"Error updating status for JobId: {weatherStation.JobId}");
                 return;
             }
         }

@@ -1,9 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
-using System.Drawing;
+using SixLabors.Fonts;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System;
 using WeatherImageGenerator.ImageGenerationJob.Entities;
 
 namespace ImageGenerationJob.Services
@@ -12,7 +15,7 @@ namespace ImageGenerationJob.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<ImageGenerationService> _logger;
-        private const string ImageUrl = "https://picsum.photos/200/300"; // Picsum API for random images
+        private const string ImageUrl = "https://picsum.photos/200/300";
 
         public ImageGenerationService(HttpClient httpClient, ILogger<ImageGenerationService> logger)
         {
@@ -24,15 +27,12 @@ namespace ImageGenerationJob.Services
         {
             try
             {
-                // Download the image from Picsum
                 var imageResponse = await _httpClient.GetAsync(ImageUrl);
-
                 if (imageResponse.IsSuccessStatusCode)
                 {
                     using var imageStream = await imageResponse.Content.ReadAsStreamAsync();
                     var memoryStream = await OverlayTextOnImage(imageStream, weatherStation);
 
-                    // Return the generated image as a MemoryStream
                     return memoryStream;
                 }
                 else
@@ -54,33 +54,28 @@ namespace ImageGenerationJob.Services
 
             try
             {
-                // Load the image from the provided stream
-                using (var image = Image.Load<Rgba32>(imageStream))
+                using (var image = await Image.LoadAsync(imageStream))
                 {
-                    // Define the texts to overlay on the image
-                    var texts = new (string text, (float x, float y) position, int fontSize, string colorHex)[]
+                    var fontCollection = new FontCollection();
+                    var font = SystemFonts.CreateFont("Verdana", 16);
+                    var color = Rgba32.ParseHex("#23b9c5");
+
+                    // Draw texts
+                    var texts = new (string text, float x, float y)[]
                     {
-                        ($"Region: {weatherStation.Region}", (10, 30), 20, "#FFFFFF"),
-                        ($"Temp: {weatherStation.Temperature}°C", (10, 60), 20, "#FFFFFF"),
-                        ($"Wind: {weatherStation.WindSpeed} km/h", (10, 90), 20, "#FFFFFF")
+                        ($"Region: {weatherStation.Region}", 10, 30),
+                        ($"Temp: {weatherStation.Temperature}°C", 10, 60),
+                        ($"Wind: {weatherStation.WindSpeed} km/h", 10, 90)
                     };
 
-                    // Overlay the text on the image
-                    foreach (var (text, (x, y), fontSize, colorHex) in texts)
+                    foreach (var (text, x, y) in texts)
                     {
-                        // Load the font
-                        var font = SystemFonts.CreateFont("Verdana", fontSize);
-                        var color = Rgba32.ParseHex(colorHex);
-
-                        // Draw the text onto the image
-                        image.Mutate(img => img.DrawText(text, font, color, new PointF(x, y)));
+                        image.Mutate(ctx => ctx.DrawText(text, font, Color.White, new PointF(x, y)));
                     }
 
-                    // Save the image to the memory stream as PNG
-                    image.SaveAsPng(memoryStream);
+                    await image.SaveAsPngAsync(memoryStream);
                 }
 
-                // Reset the memory stream position to the beginning
                 memoryStream.Position = 0;
                 return memoryStream;
             }

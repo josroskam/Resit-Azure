@@ -7,13 +7,16 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Data.Tables" Version="12.10.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.0.0-preview5" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.0.0-preview5" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.2.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.0-preview2" />
+    <PackageReference Include="SixLabors.Fonts" Version="2.1.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.0" />
   </ItemGroup>

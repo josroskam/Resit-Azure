@@ -1,8 +1,14 @@
+using Azure.Data.Tables;
+using Azure.Storage.Queues;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json.Linq;
+using ProcessWeatherImageJob.Entities;
+using ProcessWeatherImageJob.Services;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -11,6 +17,12 @@ namespace WeatherImageJob
     public class ProcessWeatherImageJob
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<ProcessWeatherImageJob> _logger;
+        private readonly string _tableConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+        private readonly string _queueConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+        private const string TableName = "WeatherImageGeneratorJobs";
+        private const string GenerateImageQueueName = "generateimagequeue";
+        private readonly WeatherStationService _weatherStationService;
 
         public ProcessWeatherImageJob(HttpClient httpClient)
         {
@@ -19,46 +31,41 @@ namespace WeatherImageJob
 
         [Function("ProcessWeatherImageJob")]
         public async Task Run(
-        [QueueTrigger("%IMAGE_PROCESSING_QUEUE%", Connection = "AZURE_STORAGE_CONNECTION_STRING")] string queueMessage,
-
+        [QueueTrigger("%IMAGE_PROCESSING_QUEUE%", Connection = "AZURE_STORAGE_CONNECTION_STRING")] string queueMessage)
         {
-            log.LogInformation("Processing weather image job.");
+            string jobId = queueMessage;
+            _logger.LogInformation("Processing weather image job with id: " + jobId);
 
-            // Parse job data
-            var job = JsonSerializer.Deserialize<JobData>(jobData);
-            var jobId = job?.JobId;
+            var tableClient = new TableClient(_tableConnectionString, TableName);
 
-            // Fetch weather data from Buienradar API
-            var response = await _httpClient.GetAsync("https://data.buienradar.nl/2.0/feed/json");
-            var weatherDataJson = await response.Content.ReadAsStringAsync();
-            var weatherData = JObject.Parse(weatherDataJson);
+            // get the job status from Table Storage
+            var jobStatus = await tableClient.GetEntityAsync<JobStatus>("WeatherJob", jobId);
+            jobStatus.Value.Status = "Stations retrieved";
 
-            // Parse weather data and queue tasks for each station
-            var weatherStations = ParseWeatherStations(weatherData); 
+            // get the weather stations from the Buienradar API
+            var weatherStations = await _weatherStationService.GetWeatherStations();
 
             foreach (var station in weatherStations)
             {
-                var taskData = new { jobId, station };
-                await imageTasksQueue.AddAsync(JsonSerializer.Serialize(taskData));
+                station.JobId = jobId;
             }
 
-            log.LogInformation("Queued image generation tasks for all stations.");
-        }
+            // add the weather stations to the queue
+            var queueClient = new QueueClient(_queueConnectionString, GenerateImageQueueName);
+            jobStatus.Value.TotalImages = weatherStations.Count();
+            await queueClient.CreateIfNotExistsAsync();
 
-        private static List<(string Name, string Temperature)> ParseWeatherStations(JObject weatherData)
-        {
-            var stations = new List<(string Name, string Temperature)>();
-            foreach (var station in weatherData["actual"]["stationmeasurements"])
+            foreach (var station in weatherStations)
             {
-                stations.Add((station["stationname"].ToString(), station["temperature"].ToString()));
+                var message = JsonSerializer.Serialize(station);
+                message = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
+                await queueClient.SendMessageAsync(message);
             }
-            return stations;
-        }
-    }
 
-    // Class to deserialize job data
-    public class JobData
-    {
-        public string JobId { get; set; }
+            // update the job entry in Table Storage
+            jobStatus.Value.TotalImages = weatherStations.Count;
+            jobStatus.Value.Status = "Images generated";
+            await tableClient.UpdateEntityAsync(jobStatus.Value, jobStatus.Value.ETag);
+        }
     }
 }

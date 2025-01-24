@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using Microsoft.Azure.WebJobs;
 using Microsoft.WindowsAzure.Storage.Blob;
 using WeatherImageGenerator.I;
 using WeatherImageGenerator.ImageGenerationJob.Entities;
@@ -41,7 +40,7 @@ namespace ImageGenerationJob
         }
 
 
-       [FunctionName("GenerateWeatherImage")]
+       [Function("GenerateWeatherImage")]
         public async Task Run(
         [QueueTrigger("%JOB_START_QUEUE%", Connection = "AZURE_STORAGE_CONNECTION_STRING")] WeatherStation weatherStation)
         {

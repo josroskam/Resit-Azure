@@ -1,5 +1,4 @@
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
@@ -18,7 +17,7 @@ namespace WeatherImageJob
             _httpClient = httpClient;
         }
 
-        [FunctionName("ProcessWeatherImageJob")]
+        [Function("ProcessWeatherImageJob")]
         public async Task Run(
         [QueueTrigger("%IMAGE_PROCESSING_QUEUE%", Connection = "AZURE_STORAGE_CONNECTION_STRING")] string queueMessage,
 

@@ -11,7 +11,7 @@ namespace StartFunction
             FunctionsDebugger.Enable();
 
             var host = new HostBuilder()
-                .ConfigureFunctionsWorkerDefaults()
+                .ConfigureFunctionsWebApplication()
                 .ConfigureServices(services =>
                 {
                     services.AddApplicationInsightsTelemetryWorkerService();

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartWeatherImageJob", "StartFunction\StartWeatherImageJob.csproj", "{0B48F943-0A64-43BD-B644-002604667129}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartWeatherImageJob", "StartWeatherImageJob\StartWeatherImageJob.csproj", "{0B48F943-0A64-43BD-B644-002604667129}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessWeatherImageJob", "ProcessWeatherImageJob\ProcessWeatherImageJob.csproj", "{18C5530D-D67F-4C4F-8ECD-A09040DE9669}"
 EndProject

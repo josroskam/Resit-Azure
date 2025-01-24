@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.30.23.60470",
+      "templateHash": "11573048193873691091"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-02-01",
+      "name": "storageAccountName",
+      "location": "WestEurope",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2021-02-01",
+      "name": "functionAppName",
+      "location": "WestEurope",
+      "kind": "functionapp",
+      "properties": {
+        "serverFarmId": "hostingPlan"
+      }
+    }
+  ]
+}

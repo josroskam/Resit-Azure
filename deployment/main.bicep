@@ -1,17 +1,204 @@
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
-  name: 'storageAccountName'
-  location: 'WestEurope'
+param location string = resourceGroup().location
+
+var prefix = 'myproj'  // Shortened prefix
+
+
+var serverFarmName = '${prefix}sf'
+var storageAccountName = '${prefix}sta'
+
+var startGeneratorFunctionName = '${prefix}StartGeneratorFunction'
+var jobProcessorFunctionName = '${prefix}JobProcessorFunction'
+var imageProcessorFunctionName = '${prefix}ImageProcessorFunction'
+var getJobFunctionName = '${prefix}GetJobFunction'
+
+resource serverFarm 'Microsoft.Web/serverfarms@2021-03-01' = {
+  name: serverFarmName
+  location: location
+  tags: resourceGroup().tags
+  sku: {
+    tier: 'Consumption'
+    name: 'Y1'
+  }
+  kind: 'elastic'
+}
+
+var storageAccountConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
+
+// Define resources with valid names
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+  name: storageAccountName
+  location: location
+  kind: 'StorageV2'
   sku: {
     name: 'Standard_LRS'
   }
-  kind: 'StorageV2'
+  properties: {
+    supportsHttpsTrafficOnly: true
+  }
 }
 
-resource functionApp 'Microsoft.Web/sites@2021-02-01' = {
-  name: 'functionAppName'
-  location: 'WestEurope'
+resource startGeneratorFunction 'Microsoft.Web/sites@2021-03-01' = {
+  name: startGeneratorFunctionName
+  location: location
+  tags: resourceGroup().tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   kind: 'functionapp'
   properties: {
-    serverFarmId: 'hostingPlan'
+    enabled: true
+    serverFarmId: serverFarm.id
+    siteConfig: {
+      netFrameworkVersion: 'v8.0'
+      minTlsVersion: '1.2'
+      scmMinTlsVersion: '1.2'
+      http20Enabled: true
+    }
+    clientAffinityEnabled: false
+    httpsOnly: true
+    containerSize: 1536
+    redundancyMode: 'None'
+  }
+}
+
+resource startGeneratorFunctionConfig 'Microsoft.Web/sites/config@2021-03-01' = {
+  name: '${startGeneratorFunctionName}/appsettings'
+  properties: {
+    FUNCTIONS_EXTENSION_VERSION: '~4'
+    FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
+    WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED: '1'
+    WEBSITE_RUN_FROM_PACKAGE: '1'
+    AzureWebJobsStorage: storageAccountConnectionString
+    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageAccountConnectionString
+    WEBSITE_CONTENTSHARE: toLower(startGeneratorFunctionName)
+    JobStatusTableName: 'jobstatus'
+    JobQueueName: 'jobqueue'
+    FUNCTIONS_AUTH_LEVEL: 'anonymous'
+  }
+}
+
+resource jobProcessorFunction 'Microsoft.Web/sites@2021-03-01' = {
+  name: jobProcessorFunctionName
+  location: location
+  tags: resourceGroup().tags
+  identity: {
+    type: 'SystemAssigned'
+  }
+  kind: 'functionapp'
+  properties: {
+    enabled: true
+    serverFarmId: serverFarm.id
+    siteConfig: {
+      netFrameworkVersion: 'v8.0'
+      minTlsVersion: '1.2'
+      scmMinTlsVersion: '1.2'
+      http20Enabled: true
+    }
+    clientAffinityEnabled: false
+    httpsOnly: true
+    containerSize: 1536
+    redundancyMode: 'None'
+  }
+}
+
+resource jobProcessorFunctionConfig 'Microsoft.Web/sites/config@2021-03-01' = {
+  name: '${jobProcessorFunctionName}/appsettings'
+  properties: {
+    FUNCTIONS_EXTENSION_VERSION: '~4'
+    FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
+    WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED: '1'
+    WEBSITE_RUN_FROM_PACKAGE: '1'
+    AzureWebJobsStorage: storageAccountConnectionString
+    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageAccountConnectionString
+    WEBSITE_CONTENTSHARE: toLower(jobProcessorFunctionName)
+    JobStatusTableName: 'jobstatus'
+    JobQueueName: 'jobqueue'
+    ImageQueueName: 'imagequeue'
+    ImageContainerName: 'weather-images'
+    WeatherEndpoint: 'https://data.buienradar.nl/2.0/feed/json'
+    ImageEndpoint: 'https://picsum.photos/200'
+  }
+}
+
+resource imageProcessorFunction 'Microsoft.Web/sites@2021-03-01' = {
+  name: imageProcessorFunctionName
+  location: location
+  tags: resourceGroup().tags
+  identity: {
+    type: 'SystemAssigned'
+  }
+  kind: 'functionapp'
+  properties: {
+    enabled: true
+    serverFarmId: serverFarm.id
+    siteConfig: {
+      netFrameworkVersion: 'v8.0'
+      minTlsVersion: '1.2'
+      scmMinTlsVersion: '1.2'
+      http20Enabled: true
+    }
+    clientAffinityEnabled: false
+    httpsOnly: true
+    containerSize: 1536
+    redundancyMode: 'None'
+  }
+}
+
+resource imageProcessorFunctionConfig 'Microsoft.Web/sites/config@2021-03-01' = {
+  name: '${imageProcessorFunctionName}/appsettings'
+  properties: {
+    FUNCTIONS_EXTENSION_VERSION: '~4'
+    FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
+    WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED: '1'
+    WEBSITE_RUN_FROM_PACKAGE: '1'
+    AzureWebJobsStorage: storageAccountConnectionString
+    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageAccountConnectionString
+    WEBSITE_CONTENTSHARE: toLower(imageProcessorFunctionName)
+    ImageQueueName: 'imagequeue'
+    JobStatusTableName: 'jobstatus'
+    ImageContainerName: 'weather-images'
+  }
+}
+
+resource getJobFunction 'Microsoft.Web/sites@2021-03-01' = {
+  name: getJobFunctionName
+  location: location
+  tags: resourceGroup().tags
+  identity: {
+    type: 'SystemAssigned'
+  }
+  kind: 'functionapp'
+  properties: {
+    enabled: true
+    serverFarmId: serverFarm.id
+    siteConfig: {
+      netFrameworkVersion: 'v8.0'
+      minTlsVersion: '1.2'
+      scmMinTlsVersion: '1.2'
+      http20Enabled: true
+    }
+    clientAffinityEnabled: false
+    httpsOnly: true
+    containerSize: 1536
+    redundancyMode: 'None'
+  }
+}
+
+resource getJobFunctionConfig 'Microsoft.Web/sites/config@2021-03-01' = {
+  name: '${getJobFunctionName}/appsettings'
+  properties: {
+    FUNCTIONS_EXTENSION_VERSION: '~4'
+    WEBSITE_RUN_FROM_PACKAGE: '1'
+    FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
+    WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED: '1'
+    AzureWebJobsStorage: storageAccountConnectionString
+    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageAccountConnectionString
+    WEBSITE_CONTENTSHARE: toLower(getJobFunctionName)
+    JobStatusTableName: 'jobstatus'          
+    AccountName: storageAccount.name
+    AccountKey: storageAccount.listKeys().keys[0].value
+    BaseUrl: storageAccount.properties.primaryEndpoints.blob
+    ImageContainerName: 'weather-images'
+    FUNCTIONS_AUTH_LEVEL: 'anonymous'
   }
 }

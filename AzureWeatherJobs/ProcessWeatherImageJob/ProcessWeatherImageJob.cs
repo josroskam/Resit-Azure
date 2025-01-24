@@ -20,9 +20,8 @@ namespace WeatherImageJob
 
         [FunctionName("ProcessWeatherImageJob")]
         public async Task Run(
-            [QueueTrigger("weather-image-jobs", Connection = "AzureWebJobsStorage")] string jobData,
-            [Queue("weather-image-tasks", Connection = "AzureWebJobsStorage")] IAsyncCollector<string> imageTasksQueue,
-            ILogger log)
+        [QueueTrigger("%IMAGE_PROCESSING_QUEUE%", Connection = "AZURE_STORAGE_CONNECTION_STRING")] string queueMessage,
+
         {
             log.LogInformation("Processing weather image job.");
 

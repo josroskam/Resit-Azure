@@ -3,6 +3,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
+using StartWeatherImageJob.Services;
 using System;
 using System.Net;
 using System.Threading.Tasks;
@@ -10,24 +11,26 @@ using System.Web;
 
 namespace StartFunction
 {
-    public static class StartWeatherImageJob
+    public class StartWeatherImageJob
     {
-        [FunctionName("StartWeatherImageJob")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "start-job")] HttpRequest req,
-            [Queue("weather-image-jobs", Connection = "AzureWebJobsStorage")] IAsyncCollector<string> jobQueue,
-            ILogger log)
+        private readonly JobService _jobService;
+        private readonly ILogger<JobService> _logger;
+
+        public StartWeatherImageJob()
         {
-            log.LogInformation("HTTP trigger to start weather image job processed a request.");
+            var tableConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+            var queueConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+            var tableName = "StartWeatherJobQueue";
+            var queueName = "WeatherImageJobs";
+            _jobService = new JobService(tableConnectionString, tableName, queueConnectionString, queueName, _logger);
+        }
 
-            // Generate a unique job ID
-            string jobId = Guid.NewGuid().ToString();
+        [FunctionName("StartWeatherImageJob")]
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
 
-            // Enqueue the job ID along with any necessary data 
-            await jobQueue.AddAsync(jobId);
-
-            // Respond with the job ID so the client can track it
-            return new OkObjectResult(new { jobId, message = "Job started successfully. Use the job ID to track status." });
+        {
+            string jobId = await _jobService.CreateJobAsync();
+            return new OkObjectResult(jobId);
         }
     }
 }

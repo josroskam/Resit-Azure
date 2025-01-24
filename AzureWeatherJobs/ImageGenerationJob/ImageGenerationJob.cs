@@ -10,58 +10,42 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Azure.WebJobs;
 using Microsoft.WindowsAzure.Storage.Blob;
+using WeatherImageGenerator.I;
+using WeatherImageGenerator.ImageGenerationJob.Entities;
+using ImageGenerationJob.Services;
+using Azure.Storage.Blobs;
 
 namespace ImageGenerationJob
 {
     public class ImageGenerationJob
     {
         private readonly HttpClient _httpClient;
-        private readonly string _blobConnectionString;
+        private readonly ILogger<ImageGenerationJob> _logger;
+        private readonly ImageGenerationService _imageGenerationService;
+        private readonly BlobService _blobService;
+        private readonly TableService _tableService;
 
-        public ImageGenerationJob(HttpClient httpClient)
+        public ImageGenerationJob(ILogger<ImageGenerationJob> logger, ILogger<ImageGenerationService> imageServiceLogger, ILogger<BlobService> blobServiceLogger, ILogger<TableService> tableServiceLogger)
         {
-            _httpClient = httpClient;
-            _blobConnectionString = Environment.GetEnvironmentVariable("BlobConnectionString"); // Blob Storage connection string
+            _httpClient = new HttpClient();
+            _logger = logger;
+
+            _imageGenerationService = new ImageGenerationService(_httpClient, imageServiceLogger);
+
+            var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
+            _blobService = new BlobService(blobServiceClient, blobServiceLogger);
+
+            var tableConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+            var tableName = "WeatherImageGeneratorJobs";
+            _tableService = new TableService(tableConnectionString, tableName, tableServiceLogger);
         }
 
-        [FunctionName("GenerateWeatherImage")]
+
+       [FunctionName("GenerateWeatherImage")]
         public async Task Run(
-            [QueueTrigger("weather-image-tasks", Connection = "AzureWebJobsStorage")] string taskData,
-            [Blob("weather-images/{rand-guid}.jpg", FileAccess.Write, Connection = "AzureWebJobsStorage")] CloudBlockBlob blob,
-            ILogger log)
+        [QueueTrigger("%JOB_START_QUEUE%", Connection = "AZURE_STORAGE_CONNECTION_STRING")] WeatherStation weatherStation)
         {
-            log.LogInformation($"Processing image generation task: {taskData}");
-
-            // Deserialize the task data
-            var task = JsonSerializer.Deserialize<dynamic>(taskData);
-            string jobId = task.jobId;
-            var station = task.station;
-
-            // Download the background image (e.g., from Unsplash API)
-            var imageUrl = "https://source.unsplash.com/800x600/?nature,weather";  // Replace with actual API call
-            var imageStream = await _httpClient.GetStreamAsync(imageUrl);
-
-            // Create an image from the background
-            var backgroundImage = Image.FromStream(imageStream);
-            var graphics = Graphics.FromImage(backgroundImage);
-
-            // Draw the weather data on the image
-            var font = new Font("Arial", 16);
-            var brush = new SolidBrush(Color.White);
-
-            graphics.DrawString($"Station: {station.Name}", font, brush, 10, 10);
-            graphics.DrawString($"Temperature: {station.Temperature}°C", font, brush, 10, 30);
-
-            // Save the image to a memory stream
-            var imageMemoryStream = new MemoryStream();
-            backgroundImage.Save(imageMemoryStream, ImageFormat.Jpeg);
-            imageMemoryStream.Position = 0;
-
-            // Upload the image to Blob Storage
-            await blob.UploadFromStreamAsync(imageMemoryStream);
-
-            log.LogInformation($"Generated image for station {station.Name}.");
-
+            _logger.LogInformation($"Processing image generation for JobId: {weatherStation.JobId}, StationId: {weatherStation.StationId}");
         }
     }
 }

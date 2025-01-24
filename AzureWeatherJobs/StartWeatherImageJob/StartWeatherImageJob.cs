@@ -5,7 +5,7 @@ using Microsoft.Azure.Functions.Worker.Http;
 using StartWeatherImageJob.Services;
 using System.Threading.Tasks;
 
-namespace StartFunction
+namespace StartWeatherImageJob
 {
     public class StartWeatherImageJob
     {

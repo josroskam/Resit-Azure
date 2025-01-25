@@ -23,7 +23,7 @@ namespace StartWeatherImageJob
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
         {
             string jobId = await _jobService.CreateJobAsync();
-            return new OkObjectResult(1);
+            return new OkObjectResult(jobId);
         }
     }
 }

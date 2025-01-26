@@ -1,5 +1,5 @@
 # Request to Start Job
-POST http://localhost:7071/api/start-job
+POST http://localhost:7071/api/StartWeatherImageJob
 Content-Type: application/json
 
 {

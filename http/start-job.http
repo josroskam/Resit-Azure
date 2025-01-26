@@ -1,7 +1,14 @@
-# Request to Start Job
-POST http://localhost:7071/api/start-job
+### POST Endpoint: StartWeatherImageJob
+
+# Description:
+# This endpoint starts a weather image generation job. It expects a JSON payload containing job-specific parameters.
+
+POST https://startweatherimagejob.azurewebsites.net/api/StartWeatherImageJob?code=YfUZXPg_5Sb0-_Nuyfao0fWaPZy_IaNF5feoUjfQJ5z-AzFujbtzhg==
 Content-Type: application/json
 
+
+### Response Example:
+HTTP/1.1 202 Accepted
 {
-    "station": "Rotterdam"
+  8d5da72c-8f86-4c43-8fc7-1d5b3b0c3abb
 }

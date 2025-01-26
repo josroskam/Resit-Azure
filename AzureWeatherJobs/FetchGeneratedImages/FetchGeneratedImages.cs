@@ -15,6 +15,12 @@ namespace FetchGeneratedImages
         private readonly ILogger<FetchGeneratedImages> _logger;
         private readonly BlobServiceClient _blobServiceClient;
 
+        public FetchGeneratedImages(ILogger<FetchGeneratedImages> logger, BlobServiceClient blobServiceClient)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _blobServiceClient = blobServiceClient ?? throw new ArgumentNullException(nameof(blobServiceClient));
+        }
+
         [Function("FetchImages")]
         public async Task<HttpResponseData> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "generated-images/{jobId}")] HttpRequestData req,

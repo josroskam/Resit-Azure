@@ -18,16 +18,19 @@ namespace WeatherImageJob
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<ProcessWeatherImageJob> _logger;
-        private readonly string _tableConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
-        private readonly string _queueConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+        private readonly string _tableConnectionString = Environment.GetEnvironmentVariable("TableConnectionString");
+        private readonly string _queueConnectionString = Environment.GetEnvironmentVariable("QueueConnectionString");
         private const string TableName = "WeatherImageGeneratorJobs";
         private const string GenerateImageQueueName = "generateimagequeue";
         private readonly WeatherStationService _weatherStationService;
 
-        public ProcessWeatherImageJob(HttpClient httpClient)
+        public ProcessWeatherImageJob(HttpClient httpClient, ILogger<ProcessWeatherImageJob> logger, WeatherStationService weatherStationService)
         {
             _httpClient = httpClient;
+            _logger = logger ?? NullLogger<ProcessWeatherImageJob>.Instance;
+            _weatherStationService = weatherStationService;
         }
+
 
         [Function("ProcessWeatherImageJob")]
         public async Task Run(
@@ -39,7 +42,7 @@ namespace WeatherImageJob
             var tableClient = new TableClient(_tableConnectionString, TableName);
 
             // get the job status from Table Storage
-            var jobStatus = await tableClient.GetEntityAsync<JobStatus>("WeatherJob", jobId);
+            var jobStatus = await tableClient.GetEntityAsync<JobStatus>("WeatherJobs", jobId);
             jobStatus.Value.Status = "Stations retrieved";
 
             // get the weather stations from the Buienradar API

@@ -1,2 +1,16 @@
-# Retrieve Generated Images
-GET http://localhost:7071/api/generated-images/{jobId}
+### GET Endpoint: FetchGeneratedImages
+
+# Description:
+# This endpoint retrieves a generated weather image by its job ID. The job ID is passed as part of the URL.
+
+GET https://startweatherimagejob.azurewebsites.net/api/generated-images/63af6087-0460-459a-af3b-739c5f88c864?code=YfUZXPg_5Sb0-_Nuyfao0fWaPZy_IaNF5feoUjfQJ5z-AzFujbtzhg==
+
+### Response Example:
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+	"jobId": "63af6087-0460-459a-af3b-739c5f88c864",
+	"numberOfImages": 0,
+	"urls": []
+}
